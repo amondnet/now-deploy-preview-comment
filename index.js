@@ -145,7 +145,7 @@ async function createCommentOnPullRequest () {
 
     Built with commit ${deploymentCommit}
 
-    https://${deploymentUrl}
+    Check it out - https://${deploymentUrl}
   `
 
   if (zeitPreviewURLComment) {
