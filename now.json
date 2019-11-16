@@ -1,7 +1,7 @@
 {
   "name": "zeit-now-deployment-action",
   "version": 2,
-  "scope": "amond",
+  "scope": "faros",
   "public": false,
   "github": {
     "enabled": false

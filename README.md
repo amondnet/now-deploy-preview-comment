@@ -2,20 +2,12 @@
 
 > ZEIT Now is a cloud platform for static sites and Serverless Functions
 
-This action make a ZEIT Now deployment with github actions. 
-
-- [x] Deploy to ZEIT now.
-- [x] Comment on pull request.
-- [x] Comment on commit.
-- [ ] Create Deployment on github.
+This action make a ZEIT Now deployment with github actions.
 
 ## Result
 
 ![preview](./preview.png)
 
-[pull request example](https://github.com/amondnet/now-deployment/pull/2)
-
-[commit](https://github.com/amondnet/now-deployment/commit/3d926623510294463c589327f5420663b1b0b35f)
 ## Inputs
 
 ### `zeit-token`
