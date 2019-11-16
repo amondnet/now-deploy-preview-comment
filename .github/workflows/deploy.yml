@@ -1,11 +1,5 @@
 name: deploy website preview
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+on: [pull_request]
 
 jobs:
   deploy:
@@ -17,4 +11,4 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           zeit-token: ${{ secrets.ZEIT_TOKEN }}
-          #ZEIT_TEAMID: amond
+          zeit-team-id: faros
