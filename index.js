@@ -38,6 +38,8 @@ async function run () {
       core.info('this is push event')
       await createCommentOnCommit()
     }
+  } else {
+    core.info('comment : disabled')
   }
 }
 
