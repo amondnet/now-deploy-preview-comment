@@ -14,10 +14,10 @@ inputs:
   github-comment:
     required: false
     default: 'true'
-    description: 'if you want to comment on pr or commit, set true, default: true'
+    description: 'if you want to comment on pr and commit, set true, default: true'
   github-token:
     required: false
-    description: 'if you want to comment on pr or commit, set token'
+    description: 'if you want to comment on pr and commit, set token'
   github-deployment:
     required: false
     default: 'false'
