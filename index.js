@@ -11,8 +11,8 @@ const zeitToken = core.getInput('zeit-token')
 const zeitTeamId = core.getInput('zeit-team-id')
 const nowArgs = core.getInput('now-args')
 const githubToken = core.getInput('github-token')
-const githubComment = core.getInput('github-comment')
-const githubDeployment = core.getInput('github-deployment')
+const githubComment = core.getInput('github-comment') === 'true'
+const githubDeployment = core.getInput('github-deployment') === 'true'
 const workingDirectory = core.getInput('working-directory')
 
 const zeitAPIClient = axios.create({
