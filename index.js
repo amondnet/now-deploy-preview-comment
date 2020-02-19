@@ -1,8 +1,8 @@
 const axios = require('axios')
-const { stripIndents } = require('common-tags')
+const {stripIndents} = require('common-tags')
 const core = require('@actions/core')
 const github = require('@actions/github')
-const { execSync } = require('child_process')
+const {execSync} = require('child_process')
 const exec = require('@actions/exec')
 
 const context = github.context
@@ -26,20 +26,29 @@ const zeitAPIClient = axios.create({
 })
 
 let octokit
-if ( githubToken ) {
+if (githubToken) {
   octokit = new github.GitHub(githubToken)
 }
 
-async function run () {
+async function run() {
   await setEnv()
   await nowDeploy()
-  if ( githubComment && githubToken ) {
+  const deployment = await findPreviewUrl()
+  const deploymentUrl = deployment.deploymentUrl
+  const deploymentCommit = deployment.deploymentCommit
+  if ( deploymentUrl ) {
+    core.info('set preview-url output')
+    core.setOutput('preview-url', `https://${deploymentUrl}`)
+  } else {
+    core.warning('get preview-url error')
+  }
+  if (githubComment && githubToken) {
     if (context.issue.number) {
       core.info('this is related issue or pull_request ')
-      await createCommentOnPullRequest()
+      await createCommentOnPullRequest(deploymentCommit, deploymentUrl)
     } else if (context.eventName === 'push') {
       core.info('this is push event')
-      await createCommentOnCommit()
+      await createCommentOnCommit(deploymentCommit, deploymentUrl)
     }
   } else {
     core.info('comment : disabled')
@@ -48,17 +57,17 @@ async function run () {
 
 async function setEnv() {
   core.info('set environment for now cli 17+')
-  if ( nowOrgId ) {
+  if (nowOrgId) {
     core.info('set env variable : NOW_ORG_ID')
-    core.exportVariable('NOW_ORG_ID', nowOrgId )
+    core.exportVariable('NOW_ORG_ID', nowOrgId)
   }
-  if ( nowProjectId ) {
+  if (nowProjectId) {
     core.info('set env variable : NOW_PROJECT_ID')
     core.exportVariable('NOW_PROJECT_ID', nowProjectId)
   }
 }
 
-async function nowDeploy () {
+async function nowDeploy() {
   const commit = execSync('git log -1 --pretty=format:%B').toString().trim()
 
   let myOutput = ''
@@ -73,49 +82,15 @@ async function nowDeploy () {
       core.info(data.toString())
     },
   }
-  if(workingDirectory){
+  if (workingDirectory) {
     options.cwd = workingDirectory
   }
 
-  return await exec.exec('npx', [
-    'now',
-    ...(nowArgs.split(/ +/)),
-    '-t',
-    zeitToken,
-    '-m',
-    `githubCommitSha=${context.sha}`,
-    '-m',
-    `githubCommitAuthorName=${context.actor}`,
-    '-m',
-    `githubCommitAuthorLogin=${context.actor}`,
-    '-m',
-    'githubDeployment=1',
-    '-m',
-    `githubOrg=${context.repo.owner}`,
-    '-m',
-    `githubRepo=${context.repo.repo}`,
-    '-m',
-    `githubCommitOrg=${context.repo.owner}`,
-    '-m',
-    `githubCommitRepo=${context.repo.repo}`,
-    '-m',
-    `githubCommitMessage=${commit}`], options).then(() => {
+  return await exec.exec('npx', ['now', ...(nowArgs.split(/ +/)), '-t', zeitToken, '-m', `githubCommitSha=${context.sha}`, '-m', `githubCommitAuthorName=${context.actor}`, '-m', `githubCommitAuthorLogin=${context.actor}`, '-m', 'githubDeployment=1', '-m', `githubOrg=${context.repo.owner}`, '-m', `githubRepo=${context.repo.repo}`, '-m', `githubCommitOrg=${context.repo.owner}`, '-m', `githubCommitRepo=${context.repo.repo}`, '-m', `githubCommitMessage=${commit}`], options).then(() => {
   })
 }
 
-async function listCommentsForCommit() {
-  if (!octokit) {
-    return;
-  }
-  const {
-    data: comments,
-  } = await octokit.repos.listCommentsForCommit({
-    ...context.repo, commit_sha: context.sha,
-  })
-  return comments;
-}
-
-async function createCommentOnCommit () {
+async function findPreviousComment(text) {
   if (!octokit) {
     return;
   }
@@ -125,9 +100,11 @@ async function createCommentOnCommit () {
     ...context.repo, commit_sha: context.sha,
   })
 
-  const zeitPreviewURLComment = comments.find(
-    comment => comment.body.startsWith('Deploy preview for _website_ ready!'))
+  const zeitPreviewURLComment = comments.find(comment => comment.body.startsWith('Deploy preview for _website_ ready!'))
+  return zeitPreviewURLComment.id
+}
 
+async function findPreviewUrl() {
   let deploymentUrl
   let deploymentCommit
 
@@ -175,6 +152,16 @@ async function createCommentOnCommit () {
       }
     }
   }
+  return {
+    deploymentUrl: deploymentUrl, deploymentCommit: deploymentCommit
+  }
+}
+
+async function createCommentOnCommit(deploymentCommit, deploymentUrl) {
+  if (!octokit) {
+    return
+  }
+  const commentId = findPreviousComment('Deploy preview for _website_ ready!')
 
   const commentBody = stripIndents`
     Deploy preview for _website_ ready!
@@ -184,8 +171,8 @@ async function createCommentOnCommit () {
     https://${deploymentUrl}
   `
 
-  if (zeitPreviewURLComment) {
-    await octokit.repos.updateCommitComment({
+  if (commentId) {
+    await octokit.repos.commentId({
       ...context.repo, comment_id: zeitPreviewURLComment.id, body: commentBody,
     })
   } else {
@@ -193,71 +180,13 @@ async function createCommentOnCommit () {
       ...context.repo, commit_sha: context.sha, body: commentBody,
     })
   }
-
-  core.setOutput('preview-url', `https://${deploymentUrl}`)
 }
 
-async function createCommentOnPullRequest () {
+async function createCommentOnPullRequest(deploymentUrl, deploymentCommit) {
   if (!octokit) {
-    return;
+    return
   }
-  const {
-    data: comments,
-  } = await octokit.issues.listComments({
-    ...context.repo, issue_number: context.issue.number,
-  })
-  console.log(comments)
-
-  const zeitPreviewURLComment = comments.find(
-    comment => comment.body.startsWith('Deploy preview for _website_ ready!'))
-
-  let deploymentUrl
-  let deploymentCommit
-
-  const {
-    data: {
-      deployments: [commitDeployment],
-    },
-  } = await zeitAPIClient.get('/v4/now/deployments', {
-    params: {
-      'meta-githubCommitSha': context.sha,
-    },
-  })
-
-  if (commitDeployment) {
-    deploymentUrl = commitDeployment.url
-    deploymentCommit = commitDeployment.meta.githubCommitSha
-  } else {
-    const {
-      data: {
-        deployments: [lastBranchDeployment],
-      },
-    } = await zeitAPIClient.get('/v4/now/deployments', {
-      params: {
-        'meta-githubCommitRef': context.ref,
-      },
-    })
-
-    if (lastBranchDeployment) {
-      deploymentUrl = lastBranchDeployment.url
-      deploymentCommit = lastBranchDeployment.meta.githubCommitSha
-    } else {
-      const {
-        data: {
-          deployments: [lastDeployment],
-        },
-      } = await zeitAPIClient.get('/v4/now/deployments', {
-        params: {
-          limit: 1,
-        },
-      })
-
-      if (lastDeployment) {
-        deploymentUrl = lastDeployment.url
-        deploymentCommit = lastDeployment.meta.githubCommitSha
-      }
-    }
-  }
+  const commentId = findPreviousComment('Deploy preview for _website_ ready!')
 
   const commentBody = stripIndents`
     Deploy preview for _website_ ready!
@@ -267,17 +196,15 @@ async function createCommentOnPullRequest () {
     https://${deploymentUrl}
   `
 
-  if (zeitPreviewURLComment) {
+  if (commentId) {
     await octokit.issues.updateComment({
-      ...context.repo, comment_id: zeitPreviewURLComment.id, body: commentBody,
+      ...context.repo, comment_id: commentId, body: commentBody,
     })
   } else {
     await octokit.issues.createComment({
       ...context.repo, issue_number: context.issue.number, body: commentBody,
     })
   }
-
-  core.setOutput('preview-url', `https://${deploymentUrl}`)
 }
 
 run().catch(error => {
