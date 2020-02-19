@@ -189,7 +189,7 @@ async function createCommentOnCommit(deploymentCommit, deploymentUrl) {
   }
 }
 
-async function createCommentOnPullRequest(deploymentUrl, deploymentCommit) {
+async function createCommentOnPullRequest(deploymentCommit, deploymentUrl) {
   if (!octokit) {
     return
   }
