@@ -105,9 +105,10 @@ async function findPreviousComment(text) {
   if ( zeitPreviewURLComment ) {
     core.info('previous comment found')
     return zeitPreviewURLComment.id
+  } else {
+    core.info('previous comment not found')
+    return null
   }
-  core.info('previous comment not found')
-  return null
 }
 
 async function findPreviewUrl() {
@@ -167,7 +168,7 @@ async function createCommentOnCommit(deploymentCommit, deploymentUrl) {
   if (!octokit) {
     return
   }
-  const commentId = findPreviousComment('Deploy preview for _website_ ready!')
+  const commentId = await findPreviousComment('Deploy preview for _website_ ready!')
 
   const commentBody = stripIndents`
     Deploy preview for _website_ ready!
@@ -192,7 +193,7 @@ async function createCommentOnPullRequest(deploymentUrl, deploymentCommit) {
   if (!octokit) {
     return
   }
-  const commentId = findPreviousComment('Deploy preview for _website_ ready!')
+  const commentId = await findPreviousComment('Deploy preview for _website_ ready!')
 
   const commentBody = stripIndents`
     Deploy preview for _website_ ready!
