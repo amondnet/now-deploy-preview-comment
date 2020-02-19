@@ -92,9 +92,9 @@ async function nowDeploy() {
 
 async function findPreviousComment(text) {
   if (!octokit) {
-    return;
+    return null
   }
-  core.debug('find comment')
+  core.info('find comment')
   const {
     data: comments,
   } = await octokit.repos.listCommentsForCommit({
@@ -103,10 +103,10 @@ async function findPreviousComment(text) {
 
   const zeitPreviewURLComment = comments.find(comment => comment.body.startsWith(text))
   if ( zeitPreviewURLComment ) {
-    core.debug('previous comment found')
+    core.info('previous comment found')
     return zeitPreviewURLComment.id
   }
-  core.debug('previous comment not found')
+  core.info('previous comment not found')
   return null
 }
 
