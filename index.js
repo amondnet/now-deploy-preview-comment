@@ -100,7 +100,7 @@ async function findPreviousComment(text) {
     ...context.repo, commit_sha: context.sha,
   })
 
-  const zeitPreviewURLComment = comments.find(comment => comment.body.startsWith('Deploy preview for _website_ ready!'))
+  const zeitPreviewURLComment = comments.find(comment => comment.body.startsWith(text))
   return zeitPreviewURLComment.id
 }
 
@@ -173,7 +173,7 @@ async function createCommentOnCommit(deploymentCommit, deploymentUrl) {
 
   if (commentId) {
     await octokit.repos.commentId({
-      ...context.repo, comment_id: zeitPreviewURLComment.id, body: commentBody,
+      ...context.repo, comment_id: commentId, body: commentBody,
     })
   } else {
     await octokit.repos.createCommitComment({
