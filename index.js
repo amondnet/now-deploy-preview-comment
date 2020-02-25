@@ -97,6 +97,7 @@ async function nowDeploy() {
       [
         "now",
         ...nowArgs.split(/ +/),
+        "-c",
         "-t",
         zeitToken,
         "-m",
