@@ -69,7 +69,7 @@ async function setEnv() {
   }
 }
 
-async function fixName(name){
+function fixName(name){
 
   return name.split("").reduce((carry, letter, index) => {
     if(letter === letter.toUpperCase() && index != 0) return [...carry, '-', letter]
@@ -120,7 +120,7 @@ async function nowDeploy() {
         "-m",
         `githubOrg=${context.repo.owner}`,
         "-m",
-        `githubRepo=${context.repo.repo.toLower}`,
+        `githubRepo=${fixName(context.repo.repo)}`,
         "-m",
         `githubCommitOrg=${context.repo.owner}`,
         "-m",
