@@ -69,6 +69,15 @@ async function setEnv() {
   }
 }
 
+async function fixName(name){
+
+  return name.split("").reduce((carry, letter, index) => {
+    if(letter === letter.toUpperCase() && index != 0) return [...carry, '-', letter]
+    return [...carry, letter]
+  }, []).join("").toLowerCase()
+
+}
+
 async function nowDeploy() {
   const commit = execSync("git log -1 --pretty=format:%B")
     .toString()
@@ -97,6 +106,7 @@ async function nowDeploy() {
       [
         "now",
         ...nowArgs.split(/ +/),
+        "--confirm",
         "-t",
         zeitToken,
         "-m",
@@ -110,11 +120,11 @@ async function nowDeploy() {
         "-m",
         `githubOrg=${context.repo.owner}`,
         "-m",
-        `githubRepo=${context.repo.repo}`,
+        `githubRepo=${context.repo.repo.toLower}`,
         "-m",
         `githubCommitOrg=${context.repo.owner}`,
         "-m",
-        `githubCommitRepo=${context.repo.repo}`,
+        `githubCommitRepo=${fixName(context.repo.repo)}`,
         "-m",
         `githubCommitMessage=${commit}`,
       ],
