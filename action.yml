@@ -1,4 +1,4 @@
-name: 'ZEIT Now Deployment'
+name: 'Draft ZEIT Now Deployment'
 description: 'This action make a deployment with github actions instead of ZEIT Now builder.'
 inputs:
   zeit-token:
