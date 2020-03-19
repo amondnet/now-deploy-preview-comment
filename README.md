@@ -139,6 +139,6 @@ jobs:
 ```
 
 
-### Agnular Example
+### Angular Example
 
 See [.github/workflow/example-angular.yml](/.github/workflows/example-angular.yml) , 
