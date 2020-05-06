@@ -35,6 +35,10 @@ This action make a ZEIT Now deployment with github actions.
 
 The url of deployment preview.
 
+### `preview-name`
+
+The name of deployment name.
+
 ## Example Usage
 
 ### Disable ZEIT Now for GitHub
