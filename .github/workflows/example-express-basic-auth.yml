@@ -1,4 +1,4 @@
-name: example - static
+name: example - basic auth
 on:
   push:
     branches:
@@ -8,7 +8,7 @@ on:
       - master
 
 jobs:
-  static:
+  basic-auth:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
