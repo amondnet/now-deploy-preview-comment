@@ -1,154 +1,91 @@
-# ZEIT Now Deployment
+# Vercel Deployment
 
-> ZEIT Now is a cloud platform for static sites and Serverless Functions
+> [Vercel](https://vercel.com) is the optimal workflow for frontend teams.
+All-in-one: Static and Jamstack deployment, Serverless Functions, and Global CDN.
 
-This action make a ZEIT Now deployment with github actions. 
+This action supports building your static site, and deploy to your Vercel project.
 
-- [x] Deploy to ZEIT now.
+- [x] Optionally build your static site.
+- [x] Deploy to Vercel.
+- [x] Optionally assign a domain to your deployment.
 - [x] Comment on pull request.
 - [x] Comment on commit.
-- [ ] Create Deployment on github.
 
-## Result
+## Usage
 
-![preview](./preview.png)
+### Inputs
 
-[pull request example](https://github.com/amondnet/now-deployment/pull/2)
+| Input             | Required | Default | Description                                                 |
+|-------------------|:--------:|---------|-------------------------------------------------------------|
+| vercelToken       | ☑️        |         | Your token at Vercel. See https://vercel.com/account/tokens |
+| vercelOrgId       | ☑️        |         | Your Organization ID at Vercel. |
+| vercelProjectId   | ☑️        |         | Your Project ID at Vercel. |
+| githubToken       | ☑️        |         | Your token at GitHub. See https://github.com/settings/tokens |
+| buildOption       |          | false   | If your site requires building. Like `npm run build`. |
+| buildSource       |          | `""`    | If your site requires building. Like `examples/nextjs`. |
+| buildOutput       |          | `""`    | If your site requires building. Provide the build output folder in the format of `FOLDER-NAME`. Like `public` for Gatsby or `out` for Next.js. |
+| buildDomain       |          |         | You can assign a domain to this deployment. Please note that this domain must have been configured in the project. |
 
-[commit](https://github.com/amondnet/now-deployment/commit/3d926623510294463c589327f5420663b1b0b35f)
-## Inputs
-
-| Name              | Required | Default | Description                                                                                       |
-|-------------------|:--------:|---------|---------------------------------------------------------------------------------------------------|
-| zeit-token        |    [x]   |         | ZEIT now token.                                                                                   |
-| github-comment    |    [ ]   | true    | if you don't want to comment on pull request.                                                     |
-| github-token      |    [ ]   |         | if you want to comment on pull request.                                                           |
-| now-args          |    [ ]   |         | This is optional args for `now` cli. Example: `--prod`                                            |
-| working-directory |    [ ]   |         | the working directory                                                                             |
-| now-project-id    |    [x]   |         | ❗️Now CLI 17+,The `name` property in now.json is deprecated (https://zeit.ink/5F)                  |
-| now-org-id        |    [x]   |         | ❗️Now CLI 17+,The `name` property in now.json is deprecated (https://zeit.ink/5F)                  |
-
-
-## Outputs
-
-### `preview-url`
-
-The url of deployment preview.
-
-### `preview-name`
-
-The name of deployment name.
-
-## Example Usage
-
-### Disable ZEIT Now for GitHub
+### Disable Vercel for GitHub
 
 > The ZEIT Now for GitHub integration automatically deploys your GitHub projects with ZEIT Now, providing Preview Deployment URLs, and automatic Custom Domain updates.
 [link](https://zeit.co/docs/v2/git-integrations)
-
-We would like to to use `github actions` for build and deploy instead of `ZEIT Now`. 
 
 Set `github.enabled: false` in now.json
 
 ```json
 {
-  "version": 2,
-  "public": false,
   "github": {
     "enabled": false
-  },
-  "builds": [
-    { "src": "./public/**", "use": "@now/static" }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "public/$1" }
-  ]
-}
-
-```
-When set to false, `ZEIT Now for GitHub` will not deploy the given project regardless of the GitHub app being installed.
-
-
-`now.json` Example:
-```json
-{
-  "version": 2,
-  "scope": "amond",
-  "public": false,
-  "github": {
-    "enabled": false
-  },
-  "builds": [
-    { "src": "./public/**", "use": "@now/static" }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "public/$1" }
-  ]
+  }
 }
 ```
+When set to false, `Vercel for GitHub` will not deploy the given project regardless of the GitHub app being installed.
 
 ### Project Linking
 
-You should link a project via [Now CLI](https://zeit.co/download) in locally.
+You should link a project via [Vercel CLI](https://vercel.com/download) in locally.
 
-When running `now` in a directory for the first time, [Now CLI](https://zeit.co/download) needs to know which scope and Project you want to deploy your directory to. You can choose to either link an existing project or to create a new one.
-
-> NOTE: Project linking requires at least version 17 of [Now CLI](https://zeit.co/download). If you have an earlier version, please [update](https://zeit.co/guides/updating-now-cli) to the latest version.
+When running `vercel` in a directory for the first time, [Vercel CLI](https://vercel.com/download) needs to know which scope and project you want to deploy your directory to. You can choose to either link an existing project or to create a new one.
 
 ```bash
-now
+vercel
 ```
 
-```bash
-? Set up and deploy “~/web/my-lovely-project”? [Y/n] y
-? Which scope do you want to deploy to? My Awesome Team
-? Link to existing project? [y/N] y
-? What’s the name of your existing project? my-lovely-project
-🔗 Linked to awesome-team/my-lovely-project (created .now and added it to .gitignore)
-```
-
-Once set up, a new `.now` directory will be added to your directory. The `.now` directory contains both the organization(`now-org-id`) and project(`now-project-id`) id of your project.
+Once set up, a new `.vercel` directory will be added to your directory. The `.vercel/project.json` file contains both the organization(`orgId`) and project(`projectId`) id of your project.
 
 ```json
 {"orgId":"example_org_id","projectId":"example_project_id"}
 ```
 
-You can save both values in the secrets setting in your repository. Read the [Official documentation](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets) if you want further info on how secrets work on Github.
+You can save both values in the secrets setting in your repository as inputs.
 
 ### Github Actions
 
 * This is a complete `.github/workflow/deploy.yml` example.
 
-Set the `now-project-id` and `now-org-id` you found above.
-
 ```yaml
 name: deploy website
-on: [pull_request]
+on: [push]
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: amondnet/now-deployment@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
         with:
-          zeit-token: ${{ secrets.ZEIT_TOKEN }} # Required
-          github-token: ${{ secrets.GITHUB_TOKEN }} #Optional 
-          now-args: '--prod' #Optional
-          now-org-id: ${{ secrets.ORG_ID}}  #Required
-          now-project-id: ${{ secrets.PROJECT_ID}} #Required 
-          working-directory: ./sub-directory
+          node-version: "12.x"
+      - name: Install dependencies
+        run: yarn
+      - uses: actions/vercel-deployment@0.5.0
+        with:
+          vercelToken: ${{ secrets.VERCEL_TOKEN }}
+          vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
+          vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
+          githubToken: ${{ secrets.PAT }}
+          buildOption: true
+          buildSource: "examples/nextjs"
+          buildOutput: "examples/nextjs/out"
+          buildDomain: "preview.example.com
 ```
-
-
-### Angular Example
-
-See [.github/workflow/example-angular.yml](/.github/workflows/example-angular.yml) , 
-
-
-### Basic Auth Example
-
-How to add Basic Authentication to a Now deployment
-
-See [.github/workflow/examole-express-basic-auth.yml](.github/workflow/examole-express-basic-auth.yml)
-
-[source code](https://github.com/amondnet/now-deployment/tree/master/example/express-basic-auth)

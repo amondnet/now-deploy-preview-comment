@@ -1,33 +1,26 @@
 {
-  "name": "now-deployment",
-  "private": true,
+  "name": "@xmflsct/vercel-deployment",
+  "version": "0.1.0",
+  "description": "Deploy static build to Vercel",
+  "main": "src/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/amondnet/now-deployment"
+    "url": "git+https://github.com/xmflsct/action-vercel-deployment"
   },
-  "author": {
-    "name": "Minsu Lee",
-    "email": "amond@amond.net",
-    "url": "https://amond.dev"
-  },
-  "version": "1.1.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node ./index.js"
+  "keywords": [
+    "GitHub",
+    "Actions",
+    "JavaScript",
+    "Vercel"
+  ],
+  "author": "Zhiyuan Zheng",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xmflsct/action-vercel-deployment/issues"
   },
   "dependencies": {
-    "@actions/core": "^1.2.2",
-    "@actions/exec": "^1.0.3",
-    "@actions/github": "^2.1.1",
-    "axios": "~0.18.1",
-    "common-tags": "^1.8.0",
-    "now": "^18.0.0",
-    "@octokit/webhooks": "latest"
-  },
-  "devDependencies": {
-    "prettier": "1.19.1"
-  },
-  "engines": {
-    "node": "v12"
+    "@actions/core": "^1.2.4",
+    "@actions/exec": "^1.0.4",
+    "@actions/github": "^2.2.0"
   }
 }

@@ -1,44 +1,35 @@
-name: 'ZEIT Now Deployment'
-description: 'This action make a deployment with github actions instead of ZEIT Now builder.'
-inputs:
-  zeit-token:
-    description: 'zeit.co token'
-    required: true
-  now-args:
-    description: ''
-    required: false
-    default: ''
-  github-comment:
-    required: false
-    default: 'true'
-    description: 'if you want to comment on pr and commit, set true, default: true'
-  github-token:
-    required: false
-    description: 'if you want to comment on pr and commit, set token'
-  github-deployment:
-    required: false
-    default: 'false'
-    description: 'if you want to create github deployment, set true, default: false'
-  working-directory:
-    required: false
-    description: the working directory
-  now-project-id:
-    required: false
-    description: 'Now CLI 17+, ❗️  The `name` property in now.json is deprecated (https://zeit.ink/5F)'
-  now-org-id:
-    required: false
-    description: 'Now CLI 17+, ❗️  The `name` property in now.json is deprecated (https://zeit.ink/5F)'
-
-
-outputs:
-  preview-url:
-    description: 'deployment preview URL'
-  preview-name:
-    description: 'deployment preview name'
-runs:
-  using: 'node12'
-  main: 'index.js'
-
+name: "Vercel Deployment"
+author: "Zhiyuan Zheng"
+description: "Deploy static build to Vercel"
 branding:
-  icon: 'check'
-  color: 'gray-dark'
+  icon: "package"
+  color: "white"
+
+inputs:
+  vercelToken:
+    description: "Your token at Vercel. See https://vercel.com/account/tokens"
+    required: true
+  vercelOrgId:
+    description: "Your Organization ID at Vercel."
+    required: true
+  vercelProjectId:
+    description: "Your Project ID at Vercel."
+    required: true
+  githubToken:
+    description: "Your token at GitHub. See https://github.com/settings/tokens"
+    required: true
+  buildOption:
+    description: "If your site requires building. Like `npm run build`."
+    default: false
+  buildSource:
+    description: "If your site requires building. Like `examples/nextjs`."
+    default: ""
+  buildOutput:
+    description: "If your site requires building. Provide the build output folder in the format of `FOLDER-NAME`. Like `public` for Gatsby or `out` for Next.js"
+    default: ""
+  buildDomain:
+    description: "You can assign a domain to this deployment. Please note that this domain must have been configured in the project."
+
+runs:
+  using: "node12"
+  main: "src/index.js"

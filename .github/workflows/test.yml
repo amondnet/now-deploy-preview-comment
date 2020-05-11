@@ -1,25 +1,47 @@
-name: test released action
+name: deploy
 on:
   push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
 
 jobs:
-  deploy:
+  test-gatsby:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: amondnet/now-deployment@v2.0.3
-        id: now-deployment
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          zeit-token: ${{ secrets.ZEIT_TOKEN }}
-          github-comment: false
-          now-org-id: ${{ secrets.NOW_ORG_ID }}
-          now-project-id: ${{ secrets.NOW_PROJECT_ID_STATIC }}
-      - name: preview-url
-        run: |
-          echo ${{ steps.now-deployment.outputs.preview-url }}
+          submodules: true
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - name: Install dependencies
+        run: yarn
+      - uses: ./
+        with:
+          vercelToken: ${{ secrets.VERCEL_TOKEN }}
+          vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
+          vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
+          githubToken: ${{ secrets.PAT }}
+          buildOption: true
+          buildSource: "examples/gatsby"
+          buildOutput: "examples/gatsby/public"
+  test-nextjs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - name: Install dependencies
+        run: yarn
+      - uses: ./
+        with:
+          vercelToken: ${{ secrets.VERCEL_TOKEN }}
+          vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
+          vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
+          githubToken: ${{ secrets.PAT }}
+          buildOption: true
+          buildSource: "examples/nextjs"
+          buildOutput: "examples/nextjs/out"
