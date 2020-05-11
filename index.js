@@ -1,272 +1,204 @@
-const { stripIndents } = require("common-tags");
-const core = require("@actions/core");
-const github = require("@actions/github");
-const { execSync } = require("child_process");
-const exec = require("@actions/exec");
+const core = require("@actions/core")
+const github = require("@actions/github")
+const exec = require("@actions/exec")
 
-const context = github.context;
+const vercelToken = core.getInput("vercelToken")
+const vercelOrgId = core.getInput("vercelOrgId")
+const vercelProjectId = core.getInput("vercelProjectId")
+const buildOption = core.getInput("buildOption") === "true"
+const buildSource = core.getInput("buildSource")
+const buildOutput = core.getInput("buildOutput")
+const buildDomain = core.getInput("buildDomain")
+const githubToken = core.getInput("githubToken")
 
-const zeitToken = core.getInput("zeit-token");
-const nowArgs = core.getInput("now-args");
-const githubToken = core.getInput("github-token");
-const githubComment = core.getInput("github-comment") === "true";
-const workingDirectory = core.getInput("working-directory");
-const nowOrgId = core.getInput("now-org-id");
-const nowProjectId = core.getInput("now-project-id");
-
-let octokit;
-if (githubToken) {
-  octokit = new github.GitHub(githubToken);
-}
+let octokit = new github.GitHub(githubToken)
 
 async function run() {
-  core.debug(`action : ${context.action}`);
-  core.debug(`ref : ${context.ref}`);
-  core.debug(`eventName : ${context.eventName}`);
-  core.debug(`actor : ${context.actor}`);
-  core.debug(`sha : ${context.sha}`);
-  core.debug(`workflow : ${context.workflow}`);
-  let ref = context.ref;
-  let sha = context.sha;
-  await setEnv();
+  core.info("--- start ---")
+  let ref
+  let sha
+  let commit
 
-  let commit = execSync("git log -1 --pretty=format:%B")
-    .toString()
-    .trim();
-  if (github.context.eventName === 'push') {
-    const pushPayload = github.context.payload;
-    core.debug(`The head commit is: ${pushPayload.head_commit}`);
-  } else if ( github.context.eventName === 'pull_request') {
-    const pullRequestPayload = github.context.payload;
-    core.debug(`head : ${pullRequestPayload.pull_request.head}`);
+  if (github.context.eventName === "push") {
+    core.info("Retriving push metadata")
+    ref = github.context.ref
+    sha = github.context.sha
+    commit = await exec.exec("git log -1 --pretty=format:%B")
+    commit = commit.toString().trim()
+  } else if (github.context.eventName === "pull_request") {
+    core.info("Retriving pull request metadata")
+    const pullRequestPayload = github.context.payload
 
-    ref = pullRequestPayload.pull_request.head.ref;
-    sha = pullRequestPayload.pull_request.head.sha;
-    core.debug(`The head ref is: ${pullRequestPayload.pull_request.head.ref}`);
-    core.debug(`The head sha is: ${pullRequestPayload.pull_request.head.sha}`);
-
-    if ( octokit ) {
-      const { data: commitData } = await octokit.git.getCommit({
-        ...context.repo, commit_sha: sha
-      });
-      commit = commitData.message;
-      core.debug(`The head commit is: ${commit}`);
-    }
+    ref = pullRequestPayload.pull_request.head.ref
+    sha = pullRequestPayload.pull_request.head.sha
+    const { data: commitData } = await octokit.git.getCommit({
+      ...github.context.repo,
+      commit_sha: sha,
+    })
+    commit = commitData.message
   }
 
-  const deploymentUrl = await nowDeploy(ref, commit);
-  if (deploymentUrl) {
-    core.info("set preview-url output");
-    core.setOutput("preview-url", deploymentUrl);
-  } else {
-    core.warning("get preview-url error");
+  if (buildOption) {
+    await buildStatic()
   }
 
-  const deploymentName = await nowInspect(deploymentUrl);
-  if (deploymentName) {
-    core.info("set preview-name output");
-    core.setOutput("preview-name", deploymentName);
-  } else {
-    core.warning("get preview-name error");
+  await setVercelEnv()
+
+  const deploymentUrl = await vercelDeploy(ref, commit)
+
+  if (buildDomain) {
+    await assignDomain(deploymentUrl)
   }
 
-  if (githubComment && githubToken) {
-    if (context.issue.number) {
-      core.info("this is related issue or pull_request ");
-      await createCommentOnPullRequest(sha, deploymentUrl, deploymentName);
-    } else if (context.eventName === "push") {
-      core.info("this is push event");
-      await createCommentOnCommit(sha, deploymentUrl, deploymentName);
-    }
-  } else {
-    core.info("comment : disabled");
+  if (github.context.issue.number) {
+    core.info("this is related issue or pull_request ")
+    await createCommentOnPullRequest(sha, deploymentUrl)
+  } else if (github.context.eventName === "push") {
+    core.info("this is push event")
+    await createCommentOnCommit(sha, deploymentUrl)
   }
+
+  core.info("---- end ----")
 }
 
-async function setEnv() {
-  core.info("set environment for now cli 17+");
-  if (nowOrgId) {
-    core.info("set env variable : NOW_ORG_ID");
-    core.exportVariable("NOW_ORG_ID", nowOrgId);
-  }
-  if (nowProjectId) {
-    core.info("set env variable : NOW_PROJECT_ID");
-    core.exportVariable("NOW_PROJECT_ID", nowProjectId);
-  }
-}
-
-async function nowDeploy(ref, commit) {
-  let myOutput = "";
-  let myError = "";
-  const options = {};
+async function buildStatic() {
+  core.info("[Build starts]")
+  let myOutput = ""
+  let myError = ""
+  const options = {}
   options.listeners = {
-    stdout: data => {
-      myOutput += data.toString();
-      core.info(data.toString());
+    stdout: (data) => {
+      myOutput += data.toString()
+      core.info(data.toString())
     },
-    stderr: data => {
-      myError += data.toString();
-      core.info(data.toString());
-    }
-  };
-  if (workingDirectory) {
-    options.cwd = workingDirectory;
+    stderr: (data) => {
+      myError += data.toString()
+      core.info(data.toString())
+    },
   }
+  options.cwd = "./" + buildSource
+  core.info("Build source is at : " + options.cwd)
+
+  await exec.exec("npx", ["yarn"], options)
+  await exec.exec("npx", ["yarn", "build"], options)
+
+  core.info("[Build ends]")
+  return
+}
+
+async function setVercelEnv() {
+  core.info("[Set env starts]")
+  if (vercelOrgId) {
+    core.exportVariable("VERCEL_ORG_ID", vercelOrgId)
+  }
+  if (vercelProjectId) {
+    core.exportVariable("VERCEL_PROJECT_ID", vercelProjectId)
+  }
+  core.info("[Set env ends]")
+}
+
+async function vercelDeploy(ref, commit) {
+  core.info("[Deploy starts]")
+  let myOutput = ""
+  let myError = ""
+  const options = {}
+  options.listeners = {
+    stdout: (data) => {
+      myOutput += data.toString()
+      core.info(data.toString())
+    },
+    stderr: (data) => {
+      myError += data.toString()
+      core.info(data.toString())
+    },
+  }
+  options.cwd = "./" + buildOutput
+  core.info("Build output is at : " + options.cwd)
 
   await exec.exec(
     "npx",
     [
-      "now",
-      ...nowArgs.split(/ +/),
-      "-t",
-      zeitToken,
+      "vercel",
+      "--token",
+      vercelToken,
       "-m",
-      `githubCommitSha=${context.sha}`,
+      `githubCommitSha=${github.context.sha}`,
       "-m",
-      `githubCommitAuthorName=${context.actor}`,
+      `githubCommitAuthorName=${github.context.actor}`,
       "-m",
-      `githubCommitAuthorLogin=${context.actor}`,
+      `githubCommitAuthorLogin=${github.context.actor}`,
       "-m",
       "githubDeployment=1",
       "-m",
-      `githubOrg=${context.repo.owner}`,
+      `githubOrg=${github.context.repo.owner}`,
       "-m",
-      `githubRepo=${context.repo.repo}`,
+      `githubRepo=${github.context.repo.repo}`,
       "-m",
-      `githubCommitOrg=${context.repo.owner}`,
+      `githubCommitOrg=${github.context.repo.owner}`,
       "-m",
-      `githubCommitRepo=${context.repo.repo}`,
+      `githubCommitRepo=${github.context.repo.repo}`,
       "-m",
       `githubCommitMessage=${commit}`,
       "-m",
-      `githubCommitRef=${ref}`
+      `githubCommitRef=${ref}`,
     ],
     options
-  );
+  )
 
-  return myOutput;
+  core.info("[Deploy ends]")
+  return myOutput
 }
 
-async function nowInspect(deploymentUrl) {
-  let myOutput = "";
-  let myError = "";
-  const options = {};
+async function assignDomain(deploymentUrl) {
+  core.info("[Assign domain starts]")
+  let myOutput = ""
+  let myError = ""
+  const options = {}
   options.listeners = {
-    stdout: data => {
-      myOutput += data.toString();
-      core.info(data.toString());
+    stdout: (data) => {
+      myOutput += data.toString()
+      core.info(data.toString())
     },
-    stderr: data => {
-      myError += data.toString();
-      core.info(data.toString());
-    }
-  };
-  if (workingDirectory) {
-    options.cwd = workingDirectory;
+    stderr: (data) => {
+      myError += data.toString()
+      core.info(data.toString())
+    },
   }
 
-  await exec.exec(
-    "npx",
-    [
-      "now",
-      "inspect",
-      deploymentUrl,
-      "-t",
-      zeitToken,
-    ],
-    options
-  );
+  try {
+    await exec.exec(
+      "npx",
+      ["vercel", "alias", deploymentUrl, buildDomain],
+      options
+    )
+  } catch (error) {
+    core.warning("Assigning domain failed with error : " + error)
+  }
 
-  const match = myError.match(/^\s+name\s+(.+)$/m);
-  return match && match.length ? match[1] : null;
+  core.info("[Assign domain ends]")
+  return
 }
 
-async function findPreviousComment(text) {
-  if (!octokit) {
-    return null;
-  }
-  core.info("find comment");
-  const { data: comments } = await octokit.repos.listCommentsForCommit({
-    ...context.repo,
-    commit_sha: context.sha
-  });
+async function createCommentOnCommit(deploymentCommit, deploymentUrl) {
+  const body = `![Vercel](https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/vercel.svg "Vercel")\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/info.svg"> This commit ${deploymentCommit} is built and deployed to [Vercel](https://vercel.com/).\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/check-in-circle.svg"> Preview: ${deploymentUrl}\r\n\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/award.svg"> This commit has been automatically deployed with [vercel-deployment](https://github.com/xmflsct/action-vercel-deployment)`
 
-  const zeitPreviewURLComment = comments.find(comment =>
-    comment.body.startsWith(text)
-  );
-  if (zeitPreviewURLComment) {
-    core.info("previous comment found");
-    return zeitPreviewURLComment.id;
-  } else {
-    core.info("previous comment not found");
-    return null;
-  }
+  await octokit.repos.createCommitComment({
+    ...github.context.repo,
+    commit_sha: github.context.sha,
+    body: body,
+  })
 }
 
-async function createCommentOnCommit(deploymentCommit, deploymentUrl, deploymentName) {
-  if (!octokit) {
-    return;
-  }
-  const commentId = await findPreviousComment(
-    `Deploy preview for _${deploymentName}_ ready!`
-  );
+async function createCommentOnPullRequest(deploymentCommit, deploymentUrl) {
+  const body = `![Vercel](https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/vercel.svg "Vercel")\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/info.svg"> This commit ${deploymentCommit} is built and deployed to [Vercel](https://vercel.com/).\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/check-in-circle.svg"> Preview: ${deploymentUrl}\r\n\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/award.svg"> This pull request has been automatically deployed with [vercel-deployment](https://github.com/xmflsct/action-vercel-deployment)`
 
-  const commentBody = stripIndents`
-    Deploy preview for _${deploymentName}_ ready!
-
-    Built with commit ${deploymentCommit}
-
-    https://${deploymentUrl}
-  `;
-
-  if (commentId) {
-    await octokit.repos.updateCommitComment({
-      ...context.repo,
-      comment_id: commentId,
-      body: commentBody
-    });
-  } else {
-    await octokit.repos.createCommitComment({
-      ...context.repo,
-      commit_sha: context.sha,
-      body: commentBody
-    });
-  }
+  await octokit.issues.createComment({
+    ...github.context.repo,
+    issue_number: github.context.issue.number,
+    body: body,
+  })
 }
 
-async function createCommentOnPullRequest(deploymentCommit, deploymentUrl, deploymentName) {
-  if (!octokit) {
-    return;
-  }
-  const commentId = await findPreviousComment(
-    `Deploy preview for _${deploymentName}_ ready!`
-  );
-
-  const commentBody = stripIndents`
-    Deploy preview for _${deploymentName}_ ready!
-
-    Built with commit ${deploymentCommit}
-
-    ✅ Preview: ${deploymentUrl}
-
-    This pull request is being automatically deployed with [now-deployment](https://github.com/amondnet/now-deployment)
-  `;
-
-  if (commentId) {
-    await octokit.issues.updateComment({
-      ...context.repo,
-      comment_id: commentId,
-      body: commentBody
-    });
-  } else {
-    await octokit.issues.createComment({
-      ...context.repo,
-      issue_number: context.issue.number,
-      body: commentBody
-    });
-  }
-}
-
-run().catch(error => {
-  core.setFailed(error.message);
-});
+run().catch((error) => {
+  core.setFailed(error.message)
+})
