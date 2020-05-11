@@ -1,0 +1,3 @@
+[submodule "example/gatsby"]
+	path = example/gatsby
+	url = https://github.com/gatsbyjs/gatsby-starter-default.git
