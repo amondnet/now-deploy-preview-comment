@@ -27,6 +27,9 @@ inputs:
   deploySource:
     description: "If building through GitHub Actiosn, an output directory may be supplied."
     default: ""
+  deployProduction:
+    description: "If this deployment is targeted as production."
+    default: false
   assignDomain:
     description: "You can assign a domain to this deployment. Please note that this domain must have been configured in the project."
 

@@ -9,6 +9,7 @@ const githubToken = core.getInput("githubToken")
 const buildOption = core.getInput("buildOption") === "true"
 const buildSource = core.getInput("buildSource")
 const deploySource = core.getInput("deploySource")
+const deployProduction = core.getInput("deployProduction") === "true"
 const assignDomain = core.getInput("assignDomain")
 
 let octokit = new github.GitHub(githubToken)
@@ -43,8 +44,7 @@ async function run() {
 
   deploymentUrl = await vercelDeploy()
 
-  if (assignDomain) {
-    await setVercelEnv()
+  if (!deployProduction && assignDomain) {
     await assignDomainToDeployment()
   }
 
@@ -113,31 +113,29 @@ async function vercelDeploy() {
   options.cwd = "./" + deploySource
   core.info("Deployment directory is at : " + options.cwd)
 
-  await exec.exec(
-    "npx",
-    [
-      "vercel",
-      "--token",
-      vercelToken,
-      "-m",
-      "githubDeployment=1",
-      "-m",
-      `githubRepo=${github.context.repo.repo}`,
-      "-m",
-      `githubCommitRepo=${github.context.repo.repo}`,
-      "-m",
-      `githubCommitRef=${ref}`,
-      "-m",
-      `githubCommitSha=${sha}`,
-      "-m",
-      `githubCommitMessage=${message}`,
-      "-m",
-      `githubCommitAuthorLogin=${payload.repository.owner.login}`,
-      "-m",
-      `githubCommitAuthorName=${payload.repository.owner.name}`,
-    ],
-    options
-  )
+  const deployCommand = [
+    "vercel",
+    "--token",
+    vercelToken,
+    "-m",
+    "githubDeployment=1",
+    "-m",
+    `githubRepo=${github.context.repo.repo}`,
+    "-m",
+    `githubCommitRepo=${github.context.repo.repo}`,
+    "-m",
+    `githubCommitRef=${ref}`,
+    "-m",
+    `githubCommitSha=${sha}`,
+    "-m",
+    `githubCommitMessage=${message}`,
+    "-m",
+    `githubCommitAuthorLogin=${payload.repository.owner.login}`,
+    "-m",
+    `githubCommitAuthorName=${payload.repository.owner.name}`,
+  ]
+  deployProduction && deployCommand.push("--prod")
+  await exec.exec("npx", deployCommand, options)
 
   core.info("[Deploy ends]")
   return myOutput
@@ -162,7 +160,7 @@ async function assignDomainToDeployment() {
   try {
     await exec.exec(
       "npx",
-      ["vercel", "alias", deploymentUrl, assignDomain],
+      ["vercel", "--token", vercelToken, "alias", deploymentUrl, assignDomain],
       options
     )
   } catch (error) {
