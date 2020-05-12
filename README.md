@@ -1,14 +1,14 @@
 # Vercel Deployment
 
-> [Vercel](https://vercel.com) is the optimal workflow for frontend teams. All-in-one: Static and Jamstack deployment, Serverless Functions, and Global CDN.
+![Tests](https://github.com/xmflsct/action-vercel-deployment/workflows/Tests/badge.svg?branch=master)
 
-This action supports building your static site, and deploy to your Vercel project.
+This action supports building your static site (optionally through [GitHub Actions](https://github.com/features/actions)), and deploy to your Vercel project.
 
 - [x] Optionally build your static site depending on your setup.
 - [x] Deploy to Vercel.
 - [x] Optionally assign a domain to your deployment.
-- [x] Comment on pull request.
-- [x] Comment on commit.
+- [x] Comment on commit with deployment URL.
+- [x] Comment on pull request with deployment URL.
 
 ## Usage
 
@@ -20,7 +20,9 @@ This action supports building your static site, and deploy to your Vercel projec
 | vercelOrgId      | [x]      |         | Your Organization ID at Vercel.                                                                                     |
 | vercelProjectId  | [x]      |         | Your Project ID at Vercel.                                                                                          |
 | githubToken      | [x]      |         | Your token at GitHub. See https://github.com/settings/tokens                                                        |
-| sourceDirectory  |          | `""`    | Default to root of your project.                                                                                    |
+| buildOption      |          | `false` | If you would like to build through GitHub Actions inatead of Vercel.                                                |
+| buildSource      |          | `""`    | If building through GitHub Actions, a source directory may be supplied.                                             |
+| deploySource     |          | `""`    | If building through GitHub Actiosn, an output directory may be supplied.                                            |
 | assignDomain     |          |         | You can assign a domain to this deployment. Please note that this domain must have been configured in the project.  |
 
 ### Disable Vercel for GitHub

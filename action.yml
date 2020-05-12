@@ -19,12 +19,13 @@ inputs:
     description: "Your token at GitHub. See https://github.com/settings/tokens"
     required: true
   buildOption:
+    description: "If you would like to build through GitHub Actions inatead of Vercel."
     default: false
   buildSource:
-    description: "Your source code to build."
+    description: "If building through GitHub Actions, a source directory may be supplied."
     default: ""
   deploySource:
-    description: "Your source code to deploy."
+    description: "If building through GitHub Actiosn, an output directory may be supplied."
     default: ""
   assignDomain:
     description: "You can assign a domain to this deployment. Please note that this domain must have been configured in the project."
