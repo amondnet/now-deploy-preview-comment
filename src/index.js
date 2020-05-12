@@ -13,26 +13,18 @@ const assignDomain = core.getInput("assignDomain")
 
 let octokit = new github.GitHub(githubToken)
 let { eventName, ref, sha, payload } = github.context
-let message
-ref = ref.replace("refs/heads/", "")
 let deploymentUrl
 
 async function run() {
   core.info("--- start ---")
-  core.info(JSON.stringify(github.context))
 
   if (eventName === "push") {
     core.info("Retriving push metadata")
-    message = payload.head_commit.message
+    ref = ref.replace("refs/heads/", "")
   } else if (github.context.eventName === "pull_request") {
     core.info("Retriving pull request metadata")
     ref = payload.pull_request.head.ref
     sha = payload.pull_request.head.sha
-    const { data: commitData } = await octokit.git.getCommit({
-      ...github.context.repo,
-      commit_sha: sha,
-    })
-    message = commitData.message
   }
 
   if (buildOption) {
@@ -48,12 +40,12 @@ async function run() {
     await assignDomainToDeployment()
   }
 
-  if (github.context.issue.number) {
-    core.info("this is related issue or pull_request ")
-    await createCommentOnPullRequest()
-  } else if (eventName === "push") {
-    core.info("this is push event")
-    await createCommentOnCommit()
+  if (eventName === "push") {
+    core.info("Commenting on push commit")
+    await commentOnCommit()
+  } else if (github.context.issue.number) {
+    core.info("Commenting on pull request")
+    await commentOnPullRequest()
   }
 
   core.info("---- end ----")
@@ -122,17 +114,17 @@ async function vercelDeploy() {
       "-m",
       "githubDeployment=1",
       "-m",
-      `githubRepo=${payload.repository.full_name}`,
+      `githubRepo=${github.context.repo.repo}`,
+      "-m",
+      `githubCommitRepo=${github.context.repo.repo}`,
       "-m",
       `githubCommitRef=${ref}`,
       "-m",
       `githubCommitSha=${sha}`,
       "-m",
-      `githubCommitMessage=${payload.head_commit.message}`,
+      `githubCommitAuthorLogin=${payload.repository.owner.login}`,
       "-m",
-      `githubCommitAuthorLogin=${payload.head_commit.author.username}`,
-      "-m",
-      `githubCommitAuthorName=${payload.head_commit.author.name}`,
+      `githubCommitAuthorName=${payload.repository.owner.name}`,
     ],
     options
   )
@@ -171,18 +163,18 @@ async function assignDomainToDeployment() {
   return
 }
 
-async function createCommentOnCommit() {
-  const body = `<img align="center" width="35" height="35" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/vercel.svg">\r\n\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/info.svg"> This commit ${sha} is built and deployed to [Vercel](https://vercel.com/).\r\n\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/check-in-circle.svg"> Preview: ${deploymentUrl}\r\n\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/award.svg"> This commit has been automatically deployed with [vercel-deployment](https://github.com/xmflsct/action-vercel-deployment)`
+async function commentOnCommit() {
+  const body = `<p align="center"><img width="35" height="35" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/vercel.svg"><p>\r\n\r\n<img align="left" width="18" height="18" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/info.svg"> This commit ${sha} is built and deployed to [Vercel](https://vercel.com/).\r\n\r\n<img align="left" width="18" height="18" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/check-in-circle.svg"> Preview: ${deploymentUrl}\r\n\r\n<img align="left" width="18" height="18" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/award.svg"> This commit has been automatically deployed with [vercel-deployment](https://github.com/xmflsct/action-vercel-deployment)`
 
   await octokit.repos.createCommitComment({
     ...github.context.repo,
-    commit_sha: github.context.sha,
+    commit_sha: sha,
     body: body,
   })
 }
 
-async function createCommentOnPullRequest() {
-  const body = `<img align="center" width="35" height="35" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/vercel.svg">\r\n\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/info.svg"> This commit ${sha} is built and deployed to [Vercel](https://vercel.com/).\r\n\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/check-in-circle.svg"> Preview: ${deploymentUrl}\r\n\r\n<img align="left" width="24" height="24" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/award.svg"> This pull request has been automatically deployed with [vercel-deployment](https://github.com/xmflsct/action-vercel-deployment)`
+async function commentOnPullRequest() {
+  const body = `<p align="center"><img width="35" height="35" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/vercel.svg"><p>\r\n\r\n<img align="left" width="18" height="18" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/info.svg"> This commit ${sha} is built and deployed to [Vercel](https://vercel.com/).\r\n\r\n<img align="left" width="18" height="18" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/check-in-circle.svg"> Preview: ${deploymentUrl}\r\n\r\n<img align="left" width="18" height="18" src="https://raw.githubusercontent.com/xmflsct/action-vercel-deployment/master/src/svgs/award.svg"> This pull request has been automatically deployed with [vercel-deployment](https://github.com/xmflsct/action-vercel-deployment)`
 
   await octokit.issues.createComment({
     ...github.context.repo,
