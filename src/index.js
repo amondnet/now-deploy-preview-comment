@@ -15,17 +15,16 @@ let octokit = new github.GitHub(githubToken)
 
 async function run() {
   core.info("--- start ---")
-  core.info(JSON.stringify(github.context))
+  core.debug(JSON.stringify(github.context))
   let ref
   let sha
-  let commit
+  let message
 
   if (github.context.eventName === "push") {
     core.info("Retriving push metadata")
-    ref = github.context.ref
+    ref = github.context.ref.replace("refs/heads/", "")
     sha = github.context.sha
-    commit = await exec.exec("git log -1 --pretty=format:%B")
-    commit = commit.toString().trim()
+    message = github.context.head_commit.message
   } else if (github.context.eventName === "pull_request") {
     core.info("Retriving pull request metadata")
     const pullRequestPayload = github.context.payload
@@ -36,7 +35,7 @@ async function run() {
       ...github.context.repo,
       commit_sha: sha,
     })
-    commit = commitData.message
+    message = commitData.message
   }
 
   if (buildOption) {
@@ -124,25 +123,19 @@ async function vercelDeploy(ref, commit) {
       "--token",
       vercelToken,
       "-m",
-      `githubCommitSha=${github.context.sha}`,
-      "-m",
-      `githubCommitAuthorName=${github.context.actor}`,
-      "-m",
-      `githubCommitAuthorLogin=${github.context.actor}`,
-      "-m",
       "githubDeployment=1",
       "-m",
-      `githubOrg=${github.context.repo.owner}`,
-      "-m",
-      `githubRepo=${github.context.repo.repo}`,
-      "-m",
-      `githubCommitOrg=${github.context.repo.owner}`,
-      "-m",
-      `githubCommitRepo=${github.context.repo.repo}`,
-      "-m",
-      `githubCommitMessage=${commit}`,
+      `githubRepo=${github.context.payload.repository.full_name}`,
       "-m",
       `githubCommitRef=${ref}`,
+      "-m",
+      `githubCommitSha=${sha}`,
+      "-m",
+      `githubCommitMessage=${message}`,
+      "-m",
+      `githubCommitAuthorLogin=${github.context.payload.head_commit.author.username}`,
+      "-m",
+      `githubCommitAuthorName=${github.context.payload.head_commit.author.name}`,
     ],
     options
   )

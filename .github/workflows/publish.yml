@@ -1,6 +1,6 @@
 on:
   push:
-    branch:
+    branches:
       - 'master'
 
 name: Create Release
