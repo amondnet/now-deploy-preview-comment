@@ -5,14 +5,17 @@ const exec = require("@actions/exec")
 const vercelToken = core.getInput("vercelToken")
 const vercelOrgId = core.getInput("vercelOrgId")
 const vercelProjectId = core.getInput("vercelProjectId")
-const sourceDirectory = core.getInput("sourceDirectory")
-const assignDomain = core.getInput("assignDomain")
 const githubToken = core.getInput("githubToken")
+const buildOption = core.getInput("buildOption") === "true"
+const buildSource = core.getInput("buildSource")
+const deploySource = core.getInput("deploySource")
+const assignDomain = core.getInput("assignDomain")
 
 let octokit = new github.GitHub(githubToken)
 
 async function run() {
   core.info("--- start ---")
+  core.debug(github.context)
   let ref
   let sha
   let commit
@@ -36,11 +39,16 @@ async function run() {
     commit = commitData.message
   }
 
+  if (buildOption) {
+    await buildStatic()
+  }
+
   await setVercelEnv()
 
   const deploymentUrl = await vercelDeploy(ref, commit)
 
   if (assignDomain) {
+    await setVercelEnv()
     await assignDomainToDeployment(deploymentUrl)
   }
 
@@ -53,6 +61,31 @@ async function run() {
   }
 
   core.info("---- end ----")
+}
+
+async function buildStatic() {
+  core.info("[Build starts]")
+  let myOutput = ""
+  let myError = ""
+  const options = {}
+  options.listeners = {
+    stdout: (data) => {
+      myOutput += data.toString()
+      core.info(data.toString())
+    },
+    stderr: (data) => {
+      myError += data.toString()
+      core.info(data.toString())
+    },
+  }
+  options.cwd = "./" + buildSource
+  core.info("Build source is at : " + options.cwd)
+
+  await exec.exec("npx", ["yarn"], options)
+  await exec.exec("npx", ["yarn", "build"], options)
+
+  core.info("[Build ends]")
+  return
 }
 
 async function setVercelEnv() {
@@ -81,7 +114,7 @@ async function vercelDeploy(ref, commit) {
       core.info(data.toString())
     },
   }
-  options.cwd = "./" + sourceDirectory
+  options.cwd = "./" + deploySource
   core.info("Deployment directory is at : " + options.cwd)
 
   await exec.exec(

@@ -18,8 +18,13 @@ inputs:
   githubToken:
     description: "Your token at GitHub. See https://github.com/settings/tokens"
     required: true
-  sourceDirectory:
-    description: "Your code source to build and deploy."
+  buildOption:
+    default: false
+  buildSource:
+    description: "Your source code to build."
+    default: ""
+  deploySource:
+    description: "Your source code to deploy."
     default: ""
   assignDomain:
     description: "You can assign a domain to this deployment. Please note that this domain must have been configured in the project."
