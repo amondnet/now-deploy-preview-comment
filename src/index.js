@@ -13,6 +13,7 @@ const assignDomain = core.getInput("assignDomain")
 
 let octokit = new github.GitHub(githubToken)
 let { eventName, ref, sha, payload } = github.context
+let message
 let deploymentUrl
 
 async function run() {
@@ -21,10 +22,17 @@ async function run() {
   if (eventName === "push") {
     core.info("Retriving push metadata")
     ref = ref.replace("refs/heads/", "")
+    message = payload.head_commit.message
   } else if (github.context.eventName === "pull_request") {
     core.info("Retriving pull request metadata")
     ref = payload.pull_request.head.ref
     sha = payload.pull_request.head.sha
+
+    const { data: commitData } = await octokit.git.getCommit({
+      ...github.context.repo,
+      commit_sha: sha,
+    })
+    message = commitData.message
   }
 
   if (buildOption) {
@@ -121,6 +129,8 @@ async function vercelDeploy() {
       `githubCommitRef=${ref}`,
       "-m",
       `githubCommitSha=${sha}`,
+      "-m",
+      `githubCommitMessage=${message}`,
       "-m",
       `githubCommitAuthorLogin=${payload.repository.owner.login}`,
       "-m",
