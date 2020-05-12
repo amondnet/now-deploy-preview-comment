@@ -26,24 +26,24 @@ jobs:
           vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
           githubToken: ${{ secrets.PAT }}
           deploySource: examples/static
-  # test-nextjs:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #       with:
-  #         submodules: true
-  #     - name: Use Node.js
-  #       uses: actions/setup-node@v1
-  #       with:
-  #         node-version: "12.x"
-  #     - name: Install dependencies
-  #       run: yarn
-  #     - uses: ./
-  #       with:
-  #         vercelToken: ${{ secrets.VERCEL_TOKEN }}
-  #         vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
-  #         vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
-  #         githubToken: ${{ secrets.PAT }}
-  #         buildOption: true
-  #         buildSource: examples/nextjs-build-on-github
-  #         deploySource: examples/nextjs-build-on-github/out
+  test-nextjs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - name: Install dependencies
+        run: yarn
+      - uses: ./
+        with:
+          vercelToken: ${{ secrets.VERCEL_TOKEN }}
+          vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
+          vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
+          githubToken: ${{ secrets.PAT }}
+          buildOption: true
+          buildSource: examples/nextjs-build-on-github
+          deploySource: examples/nextjs-build-on-github/out
