@@ -19,7 +19,7 @@ let deploymentUrl
 
 async function run() {
   core.info("--- start ---")
-  core.debug(JSON.stringify(github.context))
+  core.info(JSON.stringify(github.context))
 
   if (eventName === "push") {
     core.info("Retriving push metadata")
