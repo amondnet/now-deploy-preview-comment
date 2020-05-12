@@ -16,21 +16,17 @@ let octokit = new github.GitHub(githubToken)
 async function run() {
   core.info("--- start ---")
   core.debug(JSON.stringify(github.context))
-  let ref
-  let sha
+  let {eventName, ref, sha, payload} = github.context
   let message
+  ref = ref.replace("refs/heads/", "")
 
-  if (github.context.eventName === "push") {
+  if (eventName === "push") {
     core.info("Retriving push metadata")
-    ref = github.context.ref.replace("refs/heads/", "")
-    sha = github.context.sha
-    message = github.context.head_commit.message
+    message = payload.head_commit.message
   } else if (github.context.eventName === "pull_request") {
     core.info("Retriving pull request metadata")
-    const pullRequestPayload = github.context.payload
-
-    ref = pullRequestPayload.pull_request.head.ref
-    sha = pullRequestPayload.pull_request.head.sha
+    ref = payload.pull_request.head.ref
+    sha = payload.pull_request.head.sha
     const { data: commitData } = await octokit.git.getCommit({
       ...github.context.repo,
       commit_sha: sha,
@@ -44,7 +40,7 @@ async function run() {
 
   await setVercelEnv()
 
-  const deploymentUrl = await vercelDeploy(ref, commit)
+  const deploymentUrl = await vercelDeploy(ref, payload)
 
   if (assignDomain) {
     await setVercelEnv()
@@ -54,7 +50,7 @@ async function run() {
   if (github.context.issue.number) {
     core.info("this is related issue or pull_request ")
     await createCommentOnPullRequest(sha, deploymentUrl)
-  } else if (github.context.eventName === "push") {
+  } else if (eventName === "push") {
     core.info("this is push event")
     await createCommentOnCommit(sha, deploymentUrl)
   }
@@ -98,7 +94,7 @@ async function setVercelEnv() {
   core.info("[Set env ends]")
 }
 
-async function vercelDeploy(ref, commit) {
+async function vercelDeploy(ref, payload) {
   core.info("[Deploy starts]")
   let myOutput = ""
   let myError = ""
@@ -125,17 +121,17 @@ async function vercelDeploy(ref, commit) {
       "-m",
       "githubDeployment=1",
       "-m",
-      `githubRepo=${github.context.payload.repository.full_name}`,
+      `githubRepo=${payload.repository.full_name}`,
       "-m",
       `githubCommitRef=${ref}`,
       "-m",
       `githubCommitSha=${sha}`,
       "-m",
-      `githubCommitMessage=${message}`,
+      `githubCommitMessage=${payload.head_commit.message}`,
       "-m",
-      `githubCommitAuthorLogin=${github.context.payload.head_commit.author.username}`,
+      `githubCommitAuthorLogin=${payload.head_commit.author.username}`,
       "-m",
-      `githubCommitAuthorName=${github.context.payload.head_commit.author.name}`,
+      `githubCommitAuthorName=${payload.head_commit.author.name}`,
     ],
     options
   )
