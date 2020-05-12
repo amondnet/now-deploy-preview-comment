@@ -44,7 +44,6 @@ async function run() {
   deploymentUrl = await vercelDeploy()
 
   if (assignDomain) {
-    await setVercelEnv()
     await assignDomainToDeployment()
   }
 
@@ -162,7 +161,7 @@ async function assignDomainToDeployment() {
   try {
     await exec.exec(
       "npx",
-      ["vercel", "alias", deploymentUrl, assignDomain],
+      ["vercel", "--token", vercelToken, "alias", deploymentUrl, assignDomain],
       options
     )
   } catch (error) {
