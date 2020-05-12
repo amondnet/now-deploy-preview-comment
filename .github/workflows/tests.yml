@@ -3,7 +3,7 @@ on:
   push:
 
 jobs:
-  test-gatsby:
+  test-static:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -21,7 +21,7 @@ jobs:
           vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
           vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
           githubToken: ${{ secrets.PAT }}
-          sourceDirectory: examples/gatsby
+          deploySource: examples/static
   test-nextjs:
     runs-on: ubuntu-latest
     steps:
@@ -40,4 +40,6 @@ jobs:
           vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
           vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
           githubToken: ${{ secrets.PAT }}
-          sourceDirectory: examples/nextjs
+          buildOption: true
+          buildSource: examples/nextjs-build-on-github
+          deploySource: examples/nextjs-build-on-github/out
