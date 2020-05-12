@@ -17,11 +17,11 @@ This action supports building your static site, and deploy to your Vercel projec
 
 | Input             | Required | Default | Description                                                 |
 |-------------------|:--------:|---------|-------------------------------------------------------------|
-| vercelToken       | ☑️        |         | Your token at Vercel. See https://vercel.com/account/tokens |
-| vercelOrgId       | ☑️        |         | Your Organization ID at Vercel. |
-| vercelProjectId   | ☑️        |         | Your Project ID at Vercel. |
-| githubToken       | ☑️        |         | Your token at GitHub. See https://github.com/settings/tokens |
-| buildOption       |          | false   | If your site requires building. Like `npm run build`. |
+| vercelToken       | [x]      |         | Your token at Vercel. See https://vercel.com/account/tokens |
+| vercelOrgId       | [x]      |         | Your Organization ID at Vercel. |
+| vercelProjectId   | [x]      |         | Your Project ID at Vercel. |
+| githubToken       | [x]      |         | Your token at GitHub. See https://github.com/settings/tokens |
+| buildOption       |          | `false` | If your site requires building. Like `npm run build`. |
 | buildSource       |          | `""`    | If your site requires building. Like `examples/nextjs`. |
 | buildOutput       |          | `""`    | If your site requires building. Provide the build output folder in the format of `FOLDER-NAME`. Like `public` for Gatsby or `out` for Next.js. |
 | buildDomain       |          |         | You can assign a domain to this deployment. Please note that this domain must have been configured in the project. |
@@ -88,4 +88,6 @@ jobs:
           buildSource: "examples/nextjs"
           buildOutput: "examples/nextjs/out"
           buildDomain: "preview.example.com
+        env:
+          YOUR_ENV: ${{ secrets.YOUR_ENV }}
 ```

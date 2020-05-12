@@ -119,6 +119,8 @@ async function vercelDeploy(ref, commit) {
     "npx",
     [
       "vercel",
+      "--local-config",
+      "./vercel.json",
       "--token",
       vercelToken,
       "-m",
