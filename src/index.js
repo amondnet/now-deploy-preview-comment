@@ -15,7 +15,7 @@ let octokit = new github.GitHub(githubToken)
 
 async function run() {
   core.info("--- start ---")
-  core.debug(github.context)
+  core.info(github.context)
   let ref
   let sha
   let commit
