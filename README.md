@@ -1,11 +1,10 @@
 # Vercel Deployment
 
-> [Vercel](https://vercel.com) is the optimal workflow for frontend teams.
-All-in-one: Static and Jamstack deployment, Serverless Functions, and Global CDN.
+> [Vercel](https://vercel.com) is the optimal workflow for frontend teams. All-in-one: Static and Jamstack deployment, Serverless Functions, and Global CDN.
 
 This action supports building your static site, and deploy to your Vercel project.
 
-- [x] Optionally build your static site.
+- [x] Optionally build your static site depending on your setup.
 - [x] Deploy to Vercel.
 - [x] Optionally assign a domain to your deployment.
 - [x] Comment on pull request.
@@ -15,16 +14,14 @@ This action supports building your static site, and deploy to your Vercel projec
 
 ### Inputs
 
-| Input             | Required | Default | Description                                                 |
-|-------------------|:--------:|---------|-------------------------------------------------------------|
-| vercelToken       | [x]      |         | Your token at Vercel. See https://vercel.com/account/tokens |
-| vercelOrgId       | [x]      |         | Your Organization ID at Vercel. |
-| vercelProjectId   | [x]      |         | Your Project ID at Vercel. |
-| githubToken       | [x]      |         | Your token at GitHub. See https://github.com/settings/tokens |
-| buildOption       |          | `false` | If your site requires building. Like `npm run build`. |
-| buildSource       |          | `""`    | If your site requires building. Like `examples/nextjs`. |
-| buildOutput       |          | `""`    | If your site requires building. Provide the build output folder in the format of `FOLDER-NAME`. Like `public` for Gatsby or `out` for Next.js. |
-| buildDomain       |          |         | You can assign a domain to this deployment. Please note that this domain must have been configured in the project. |
+| Input            | Required | Default | Description                                                                                                         |
+|------------------|:--------:|---------|---------------------------------------------------------------------------------------------------------------------|
+| vercelToken      | [x]      |         | Your token at Vercel. See https://vercel.com/account/tokens                                                         |
+| vercelOrgId      | [x]      |         | Your Organization ID at Vercel.                                                                                     |
+| vercelProjectId  | [x]      |         | Your Project ID at Vercel.                                                                                          |
+| githubToken      | [x]      |         | Your token at GitHub. See https://github.com/settings/tokens                                                        |
+| sourceDirectory  |          | `""`    | Default to root of your project.                                                                                    |
+| assignDomain     |          |         | You can assign a domain to this deployment. Please note that this domain must have been configured in the project.  |
 
 ### Disable Vercel for GitHub
 
@@ -58,7 +55,7 @@ Once set up, a new `.vercel` directory will be added to your directory. The `.ve
 {"orgId":"example_org_id","projectId":"example_project_id"}
 ```
 
-You can save both values in the secrets setting in your repository as inputs.
+You can save both values in the secrets [input setting](#inputs) in your repository as inputs.
 
 ### Github Actions
 
@@ -78,16 +75,15 @@ jobs:
           node-version: "12.x"
       - name: Install dependencies
         run: yarn
-      - uses: actions/vercel-deployment@0.5.0
+      - uses: actions/vercel-deployment@0.5.1
         with:
           vercelToken: ${{ secrets.VERCEL_TOKEN }}
           vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
           vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
           githubToken: ${{ secrets.PAT }}
-          buildOption: true
-          buildSource: "examples/nextjs"
-          buildOutput: "examples/nextjs/out"
-          buildDomain: "preview.example.com
+          sourceDirectory: "src"
+          assignDomain: "preview.example.com"
         env:
-          YOUR_ENV: ${{ secrets.YOUR_ENV }}
+          YOUR_ENV_1: ${{ secrets.YOUR_ENV_1 }}
+          YOUR_ENV_2: ${{ secrets.YOUR_ENV_2 }}
 ```
