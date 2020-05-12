@@ -21,9 +21,7 @@ jobs:
           vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
           vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
           githubToken: ${{ secrets.PAT }}
-          buildOption: true
-          buildSource: "examples/gatsby"
-          buildOutput: "examples/gatsby/public"
+          sourceDirectory: examples/gatsby
   test-nextjs:
     runs-on: ubuntu-latest
     steps:
@@ -42,6 +40,4 @@ jobs:
           vercelOrgId: ${{ secrets.VERCEL_ORG_ID }}
           vercelProjectId: ${{ secrets.VERCEL_PROJECT_ID }}
           githubToken: ${{ secrets.PAT }}
-          buildOption: true
-          buildSource: "examples/nextjs"
-          buildOutput: "examples/nextjs/out"
+          sourceDirectory: examples/nextjs

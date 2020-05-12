@@ -18,16 +18,10 @@ inputs:
   githubToken:
     description: "Your token at GitHub. See https://github.com/settings/tokens"
     required: true
-  buildOption:
-    description: "If your site requires building. Like `npm run build`."
-    default: false
-  buildSource:
-    description: "If your site requires building. Like `examples/nextjs`."
+  sourceDirectory:
+    description: "Your code source to build and deploy."
     default: ""
-  buildOutput:
-    description: "If your site requires building. Provide the build output folder in the format of `FOLDER-NAME`. Like `public` for Gatsby or `out` for Next.js"
-    default: ""
-  buildDomain:
+  assignDomain:
     description: "You can assign a domain to this deployment. Please note that this domain must have been configured in the project."
 
 runs:
