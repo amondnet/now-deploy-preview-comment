@@ -1,18 +1,18 @@
-const { stripIndents } = require("common-tags");
-const core = require("@actions/core");
-const github = require("@actions/github");
-const { execSync } = require("child_process");
-const exec = require("@actions/exec");
+const { stripIndents } = require('common-tags');
+const core = require('@actions/core');
+const github = require('@actions/github');
+const { execSync } = require('child_process');
+const exec = require('@actions/exec');
 
-const context = github.context;
+const { context } = github;
 
-const zeitToken = core.getInput("zeit-token");
-const nowArgs = core.getInput("now-args");
-const githubToken = core.getInput("github-token");
-const githubComment = core.getInput("github-comment") === "true";
-const workingDirectory = core.getInput("working-directory");
-const nowOrgId = core.getInput("now-org-id");
-const nowProjectId = core.getInput("now-project-id");
+const zeitToken = core.getInput('zeit-token');
+const nowArgs = core.getInput('now-args');
+const githubToken = core.getInput('github-token');
+const githubComment = core.getInput('github-comment') === 'true';
+const workingDirectory = core.getInput('working-directory');
+const nowOrgId = core.getInput('now-org-id');
+const nowProjectId = core.getInput('now-project-id');
 
 let octokit;
 if (githubToken) {
@@ -26,17 +26,17 @@ async function run() {
   core.debug(`actor : ${context.actor}`);
   core.debug(`sha : ${context.sha}`);
   core.debug(`workflow : ${context.workflow}`);
-  let ref = context.ref;
-  let sha = context.sha;
+  let { ref } = context;
+  let { sha } = context;
   await setEnv();
 
-  let commit = execSync("git log -1 --pretty=format:%B")
+  let commit = execSync('git log -1 --pretty=format:%B')
     .toString()
     .trim();
   if (github.context.eventName === 'push') {
     const pushPayload = github.context.payload;
     core.debug(`The head commit is: ${pushPayload.head_commit}`);
-  } else if ( github.context.eventName === 'pull_request') {
+  } else if (github.context.eventName === 'pull_request') {
     const pullRequestPayload = github.context.payload;
     core.debug(`head : ${pullRequestPayload.pull_request.head}`);
 
@@ -45,9 +45,10 @@ async function run() {
     core.debug(`The head ref is: ${pullRequestPayload.pull_request.head.ref}`);
     core.debug(`The head sha is: ${pullRequestPayload.pull_request.head.sha}`);
 
-    if ( octokit ) {
+    if (octokit) {
       const { data: commitData } = await octokit.git.getCommit({
-        ...context.repo, commit_sha: sha
+        ...context.repo,
+        commit_sha: sha,
       });
       commit = commitData.message;
       core.debug(`The head commit is: ${commit}`);
@@ -56,48 +57,52 @@ async function run() {
 
   const deploymentUrl = await nowDeploy(ref, commit);
   if (deploymentUrl) {
-    core.info("set preview-url output");
-    core.setOutput("preview-url", deploymentUrl);
+    core.info('set preview-url output');
+    core.setOutput('preview-url', deploymentUrl);
   } else {
-    core.warning("get preview-url error");
+    core.warning('get preview-url error');
   }
 
   const deploymentName = await nowInspect(deploymentUrl);
   if (deploymentName) {
-    core.info("set preview-name output");
-    core.setOutput("preview-name", deploymentName);
+    core.info('set preview-name output');
+    core.setOutput('preview-name', deploymentName);
   } else {
-    core.warning("get preview-name error");
+    core.warning('get preview-name error');
   }
 
   if (githubComment && githubToken) {
     if (context.issue.number) {
-      core.info("this is related issue or pull_request ");
+      core.info('this is related issue or pull_request ');
       await createCommentOnPullRequest(sha, deploymentUrl, deploymentName);
-    } else if (context.eventName === "push") {
-      core.info("this is push event");
+    } else if (context.eventName === 'push') {
+      core.info('this is push event');
       await createCommentOnCommit(sha, deploymentUrl, deploymentName);
     }
   } else {
-    core.info("comment : disabled");
+    core.info('comment : disabled');
   }
 }
 
 async function setEnv() {
-  core.info("set environment for now cli 17+");
+  core.info('set environment for now cli 17+');
   if (nowOrgId) {
-    core.info("set env variable : NOW_ORG_ID");
-    core.exportVariable("NOW_ORG_ID", nowOrgId);
+    core.info('set env variable : NOW_ORG_ID');
+    core.exportVariable('NOW_ORG_ID', nowOrgId);
   }
   if (nowProjectId) {
-    core.info("set env variable : NOW_PROJECT_ID");
-    core.exportVariable("NOW_PROJECT_ID", nowProjectId);
+    core.info('set env variable : NOW_PROJECT_ID');
+    core.exportVariable('NOW_PROJECT_ID', nowProjectId);
   }
 }
 
+function setOptionsListener() {
+
+}
+
 async function nowDeploy(ref, commit) {
-  let myOutput = "";
-  let myError = "";
+  let myOutput = '';
+  let myError = '';
   const options = {};
   options.listeners = {
     stdout: data => {
@@ -107,49 +112,50 @@ async function nowDeploy(ref, commit) {
     stderr: data => {
       myError += data.toString();
       core.info(data.toString());
-    }
+    },
   };
   if (workingDirectory) {
     options.cwd = workingDirectory;
   }
 
   await exec.exec(
-    "npx",
+    'npx',
     [
-      "now",
+      'now',
       ...nowArgs.split(/ +/),
-      "-t",
+      '-t',
       zeitToken,
-      "-m",
+      '-m',
       `githubCommitSha=${context.sha}`,
-      "-m",
+      '-m',
       `githubCommitAuthorName=${context.actor}`,
-      "-m",
+      '-m',
       `githubCommitAuthorLogin=${context.actor}`,
-      "-m",
-      "githubDeployment=1",
-      "-m",
+      '-m',
+      'githubDeployment=1',
+      '-m',
       `githubOrg=${context.repo.owner}`,
-      "-m",
+      '-m',
       `githubRepo=${context.repo.repo}`,
-      "-m",
+      '-m',
       `githubCommitOrg=${context.repo.owner}`,
-      "-m",
+      '-m',
       `githubCommitRepo=${context.repo.repo}`,
-      "-m",
+      '-m',
       `githubCommitMessage=${commit}`,
-      "-m",
-      `githubCommitRef=${ref}`
+      '-m',
+      `githubCommitRef=${ref}`,
     ],
-    options
+    options,
   );
 
   return myOutput;
 }
 
 async function nowInspect(deploymentUrl) {
-  let myOutput = "";
-  let myError = "";
+  // eslint-disable-next-line no-unused-vars
+  let myOutput = '';
+  let myError = '';
   const options = {};
   options.listeners = {
     stdout: data => {
@@ -159,22 +165,16 @@ async function nowInspect(deploymentUrl) {
     stderr: data => {
       myError += data.toString();
       core.info(data.toString());
-    }
+    },
   };
   if (workingDirectory) {
     options.cwd = workingDirectory;
   }
 
   await exec.exec(
-    "npx",
-    [
-      "now",
-      "inspect",
-      deploymentUrl,
-      "-t",
-      zeitToken,
-    ],
-    options
+    'npx',
+    ['now', 'inspect', deploymentUrl, '-t', zeitToken],
+    options,
   );
 
   const match = myError.match(/^\s+name\s+(.+)$/m);
@@ -185,30 +185,33 @@ async function findPreviousComment(text) {
   if (!octokit) {
     return null;
   }
-  core.info("find comment");
+  core.info('find comment');
   const { data: comments } = await octokit.repos.listCommentsForCommit({
     ...context.repo,
-    commit_sha: context.sha
+    commit_sha: context.sha,
   });
 
   const zeitPreviewURLComment = comments.find(comment =>
-    comment.body.startsWith(text)
+    comment.body.startsWith(text),
   );
   if (zeitPreviewURLComment) {
-    core.info("previous comment found");
+    core.info('previous comment found');
     return zeitPreviewURLComment.id;
-  } else {
-    core.info("previous comment not found");
-    return null;
   }
+  core.info('previous comment not found');
+  return null;
 }
 
-async function createCommentOnCommit(deploymentCommit, deploymentUrl, deploymentName) {
+async function createCommentOnCommit(
+  deploymentCommit,
+  deploymentUrl,
+  deploymentName,
+) {
   if (!octokit) {
     return;
   }
   const commentId = await findPreviousComment(
-    `Deploy preview for _${deploymentName}_ ready!`
+    `Deploy preview for _${deploymentName}_ ready!`,
   );
 
   const commentBody = stripIndents`
@@ -223,23 +226,27 @@ async function createCommentOnCommit(deploymentCommit, deploymentUrl, deployment
     await octokit.repos.updateCommitComment({
       ...context.repo,
       comment_id: commentId,
-      body: commentBody
+      body: commentBody,
     });
   } else {
     await octokit.repos.createCommitComment({
       ...context.repo,
       commit_sha: context.sha,
-      body: commentBody
+      body: commentBody,
     });
   }
 }
 
-async function createCommentOnPullRequest(deploymentCommit, deploymentUrl, deploymentName) {
+async function createCommentOnPullRequest(
+  deploymentCommit,
+  deploymentUrl,
+  deploymentName,
+) {
   if (!octokit) {
     return;
   }
   const commentId = await findPreviousComment(
-    `Deploy preview for _${deploymentName}_ ready!`
+    `Deploy preview for _${deploymentName}_ ready!`,
   );
 
   const commentBody = stripIndents`
@@ -256,13 +263,13 @@ async function createCommentOnPullRequest(deploymentCommit, deploymentUrl, deplo
     await octokit.issues.updateComment({
       ...context.repo,
       comment_id: commentId,
-      body: commentBody
+      body: commentBody,
     });
   } else {
     await octokit.issues.createComment({
       ...context.repo,
       issue_number: context.issue.number,
-      body: commentBody
+      body: commentBody,
     });
   }
 }
