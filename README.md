@@ -14,6 +14,7 @@ This action make a ZEIT Now deployment with github actions.
 - [x] Deploy to ZEIT now.
 - [x] Comment on pull request.
 - [x] Comment on commit.
+- [x] [Password Protect ( Basic Auth )](https://github.com/amondnet/now-deployment#basic-auth-example)
 - [ ] Create Deployment on github.
 
 ## Result
