@@ -1,10 +1,12 @@
-# ZEIT Now Deployment
+# ZEIT Now Deployment ( Vercel Action )
 
-## This Action has been renamed Vercel Action
+![star](https://badgen.net/github/stars/amondnet/now-deployment)
 
-**This action remains reserved for previous users (now-deployment) .**
+## This Action has been renamed Vercel Action 
+Please use the [Vercel Action](https://github.com/marketplace/actions/vercel-action) instead.
 
-https://github.com/marketplace/actions/vercel-action
+**This action remains reserved for previous users (now-deployment).**
+
 
 > ZEIT Now is a cloud platform for static sites and Serverless Functions
 
