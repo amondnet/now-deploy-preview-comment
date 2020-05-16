@@ -3,17 +3,27 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/amondnet/now-deployment"
+    "url": "git+https://github.com/amondnet/now-deployment"
   },
   "author": {
     "name": "Minsu Lee",
     "email": "amond@amond.net",
     "url": "https://amond.dev"
   },
-  "version": "1.1.0",
+  "keywords": [
+    "GitHub",
+    "Actions",
+    "Vercel",
+    "Zeit",
+    "Now"
+  ],
+  "version": "2.4.0-SNAPSHOT",
   "main": "index.js",
   "scripts": {
-    "start": "node ./index.js"
+    "lint": "eslint index.js",
+    "start": "node ./index.js",
+    "package": "ncc build index.js -o dist",
+    "test": "eslint index.js && jest"
   },
   "dependencies": {
     "@actions/core": "^1.2.2",
@@ -25,7 +35,10 @@
     "@octokit/webhooks": "latest"
   },
   "devDependencies": {
-    "prettier": "1.19.1"
+    "@zeit/ncc": "^0.20.5",
+    "prettier": "1.19.1",
+    "eslint": "^6.3.0",
+    "jest": "^24.9.0"
   },
   "engines": {
     "node": "v12"
