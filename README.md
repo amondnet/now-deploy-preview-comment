@@ -1,6 +1,13 @@
 # ZEIT Now Deployment
-
 > ZEIT Now is a cloud platform for static sites and Serverless Functions
+
+## This Action has been renamed Vercel Action
+Please use [Vercel Action](https://github.com/marketplace/actions/vercel-action) instead.
+
+**This action remains reserved for previous users (now-deployment) .**
+
+
+---
 
 This action make a ZEIT Now deployment with github actions. 
 
