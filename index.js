@@ -21,6 +21,8 @@ if (githubToken) {
 
 async function run() {
   core.warning('Zeit is now renamed to Vercel.\nPlease use Vercel Action instead')
+  core.warning('Please use Vercel Action (https://github.com/marketplace/actions/vercel-action) instead')
+
   core.debug(`action : ${context.action}`);
   core.debug(`ref : ${context.ref}`);
   core.debug(`eventName : ${context.eventName}`);
